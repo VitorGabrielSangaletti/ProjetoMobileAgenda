@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Agenda } from 'react-native-calendars'
 import { useFocusEffect, useIsFocused } from '@react-navigation/native'
+import { signOut } from 'firebase/auth'
+import { auth } from '../utils/firebase'
 
 import { loadEvents, addEvent, updateEvent, deleteEvent } from '../utils/storage'
 import { buscarAlertas, pesquisarEventos, construirDatasMarcadas, temaAgenda } from '../utils/constantes'
@@ -73,7 +75,10 @@ export default function Home({ navigation }) {
       <BarraSuperior
         modoPesquisa={modoPesquisa}
         aoTogglePesquisa={() => { setModoPesquisa(v => !v); setTermoPesquisa('') }}
-        aoSair={() => navigation.getParent().replace('Login')}
+        aoSair={async () => {
+          await signOut(auth)
+          navigation.getParent().replace('Login')
+        }}
       />
 
       <BannerAlerta quantidade={alertas.length} aoPress={() => setAlertaVisivel(true)} />

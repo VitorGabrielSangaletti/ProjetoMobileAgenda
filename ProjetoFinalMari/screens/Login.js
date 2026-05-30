@@ -1,69 +1,64 @@
-import { useState, useEffect } from 'react'
-import { TextInput, View, Image, Text, TouchableOpacity, ImageBackground, ActivityIndicator, Alert } from 'react-native'
-import { buscarUsuario, cadastrarUsuario, validarLogin } from '../utils/storage'
+import { useState } from 'react'
+import { TextInput, View, Image, Text, TouchableOpacity, ImageBackground, Alert, ActivityIndicator } from 'react-native'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '../utils/firebase'
 import styles from '../styles/loginStyles'
 
 export default function Login({ navigation }) {
-  const [usuario, setUsuario] = useState('')
+  const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const [confirmaSenha, setConfirmaSenha] = useState('')
-  const [primeiroCadastro, setPrimeiroCadastro] = useState(false)
-  const [carregando, setCarregando] = useState(true)
-
-  useEffect(() => {
-    buscarUsuario().then(u => {
-      setPrimeiroCadastro(!u)
-      setCarregando(false)
-    })
-  }, [])
+  const [carregando, setCarregando] = useState(false)
+  const [modoCadastro, setModoCadastro] = useState(false)
 
   async function entrar() {
-    if (!usuario.trim() || !senha.trim()) {
-      Alert.alert('Atenção', 'Preencha usuário e senha.')
+    
+    if (!email.trim() || !senha.trim()) {
+      Alert.alert('Atenção', 'Preencha email e senha.')
       return
     }
 
-    if (primeiroCadastro) {
-      if (senha !== confirmaSenha) return Alert.alert('Erro', 'As senhas não coincidem.')
-      if (senha.length < 4) return Alert.alert('Erro', 'Senha muito curta, mínimo 4 caracteres.')
-      await cadastrarUsuario(usuario.trim(), senha)
-      navigation.replace('home')
-    } else {
-      const resultado = await validarLogin(usuario.trim(), senha)
-      if (resultado.sucesso) {
-        navigation.replace('home')
+    setCarregando(true)
+    try {
+      if (modoCadastro) {
+        await createUserWithEmailAndPassword(auth, email.trim(), senha)
       } else {
-        Alert.alert('Acesso negado', 'Usuário ou senha incorretos.')
+        await signInWithEmailAndPassword(auth, email.trim(), senha)
       }
+      navigation.replace('home')
+    } catch (erro) {
+      const mensagens = {
+        'auth/invalid-email':'Email inválido.',
+        'auth/user-not-found':'Usuário não encontrado.',
+        'auth/wrong-password': 'Senha incorreta.',
+        'auth/email-already-in-use': 'Este email já está cadastrado.',
+        'auth/weak-password': 'Senha muito fraca, mínimo 6 caracteres.',
+      }
+      Alert.alert('Erro', mensagens[erro.code] || 'Algo deu errado, tenta de novo.')
+    } finally {
+      setCarregando(false)
     }
   }
 
-  if (carregando) {
-    return (
-      <View style={styles.fundoCarregando}>
-        <ActivityIndicator size="large" color="#1DB954" />
-      </View>
-    )
-  }
-
   return (
-    <ImageBackground style={styles.fundo} resizeMode="cover" source={require('../assets/floresta.jpg')} blurRadius={8}>
+    <ImageBackground
+      style={styles.fundo}
+      resizeMode="cover"
+      source={require('../assets/floresta.jpg')}
+      blurRadius={8}
+    >
       <View style={styles.container}>
         <Image source={require('../assets/guest.png')} style={styles.logo} />
 
-        <Text style={styles.titulo}>{primeiroCadastro ? 'Criar conta' : 'Bem-vindo'}</Text>
-
-        {primeiroCadastro && (
-          <Text style={styles.subtitulo}>Primeiro acesso! Crie seu usuário e senha.</Text>
-        )}
+        <Text style={styles.titulo}>{modoCadastro ? 'Criar conta' : 'Bem-vindo'}</Text>
 
         <TextInput
-          placeholder="Usuário"
+          placeholder="Email"
           placeholderTextColor="#aaa"
           style={styles.campo}
-          value={usuario}
-          onChangeText={setUsuario}
+          value={email}
+          onChangeText={setEmail}
           autoCapitalize="none"
+          keyboardType="email-address"
         />
 
         <TextInput
@@ -75,22 +70,18 @@ export default function Login({ navigation }) {
           secureTextEntry
         />
 
-        {primeiroCadastro && (
-          <TextInput
-            placeholder="Confirmar senha"
-            placeholderTextColor="#aaa"
-            style={styles.campo}
-            value={confirmaSenha}
-            onChangeText={setConfirmaSenha}
-            secureTextEntry
-          />
-        )}
-
-        <TouchableOpacity style={styles.botao} onPress={entrar}>
-          <Text style={styles.textoBotao}>{primeiroCadastro ? 'Criar conta' : 'Entrar'}</Text>
+        <TouchableOpacity style={styles.botao} onPress={entrar} disabled={carregando}>
+          {carregando
+            ? <ActivityIndicator color="#fff" />
+            : <Text style={styles.textoBotao}>{modoCadastro ? 'Cadastrar' : 'Entrar'}</Text>
+          }
         </TouchableOpacity>
 
-        {!primeiroCadastro && <Text style={styles.rodape}>Esqueceu a senha?</Text>}
+        <TouchableOpacity onPress={() => setModoCadastro(v => !v)}>
+          <Text style={styles.rodape}>
+            {modoCadastro ? 'Já tenho conta' : 'Criar conta'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </ImageBackground>
   )
