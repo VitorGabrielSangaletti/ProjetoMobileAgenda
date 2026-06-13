@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { View, Text, TouchableOpacity, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Agenda } from 'react-native-calendars'
@@ -26,6 +26,21 @@ export default function Home({ navigation }) {
   const [modoPesquisa, setModoPesquisa] = useState(false)
 
   const telaPrincialAtiva = useIsFocused()
+  const agendaRef = useRef(null)
+  const [calendarioAberto, setCalendarioAberto] = useState(true)
+
+  // Garante que o calendário começa expandido ao abrir a tela
+  useEffect(() => {
+    const tempo = setTimeout(() => {
+      if (!calendarioAberto) agendaRef.current?.toggleCalendarPosition()
+    }, 200)
+    return () => clearTimeout(tempo)
+  }, [])
+
+  function aoSelecionarDia(dia) {
+    setDataSelecionada(dia.dateString)
+    if (calendarioAberto) agendaRef.current?.toggleCalendarPosition()
+  }
 
   useFocusEffect(useCallback(() => {
     loadEvents().then(dados => {
@@ -92,10 +107,12 @@ export default function Home({ navigation }) {
         />
       ) : (
         <Agenda
+          ref={agendaRef}
           items={itensAgenda}
           selected={dataSelecionada}
           markedDates={construirDatasMarcadas(eventos, dataSelecionada)}
-          onDayPress={dia => setDataSelecionada(dia.dateString)}
+          onDayPress={aoSelecionarDia}
+          onCalendarToggled={setCalendarioAberto}
           theme={temaAgenda}
           renderItem={item => <ItemEvento item={item} aoPress={() => abrirEdicao(item)} />}
           renderEmptyDate={() => (

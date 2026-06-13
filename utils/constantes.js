@@ -1,7 +1,7 @@
 export const PRIORIDADE = {
-  urgente: { cor: '#ef4444', rotulo: '🔴 Urgente' },
+  urgente:    { cor: '#ef4444', rotulo: '🔴 Urgente' },
   importante: { cor: '#f59e0b', rotulo: '🟡 Importante' },
-  normal: { cor: '#6b7280', rotulo: '⚪ Normal' },
+  normal:     { cor: '#6b7280', rotulo: '⚪ Normal' },
 }
 
 export const temaAgenda = {
@@ -23,23 +23,23 @@ export const temaAgenda = {
 }
 
 export function dataDeHoje() {
-  return new Date().toISOString().split('T')[0] 
+  return new Date().toISOString().split('T')[0]
 }
 
 export function estaEmMenos24h(data, hora) {
-  if (!data || !hora) return false 
-  const [ano, mes, dia] = data.split('-').map(Number) 
-  const [h, m] = hora.split(':').map(Number) // 
-  const evento = new Date(ano, mes - 1, dia, h || 0, m || 0) 
-  const diff = evento - Date.now() 
-  return diff > 0 && diff < 24 * 60 * 60 * 1000 
+  if (!data || !hora) return false
+  const [ano, mes, dia] = data.split('-').map(Number)
+  const [h, m] = hora.split(':').map(Number)
+  const evento = new Date(ano, mes - 1, dia, h || 0, m || 0)
+  const diff = evento - Date.now()
+  return diff > 0 && diff < 24 * 60 * 60 * 1000
 }
 
 export function construirDatasMarcadas(eventos, dataSelecionada) {
-  const marcacoes = {} 
+  const marcacoes = {}
 
-  Object.keys(eventos).forEach(data => { 
-    const evs = eventos[data] || [] //
+  Object.keys(eventos).forEach(data => {
+    const evs = eventos[data] || []
     const temUrgente = evs.some(e => e.prioridade === 'urgente')
     const temImportante = evs.some(e => e.prioridade === 'importante')
     const corPonto = temUrgente ? '#ef4444' : temImportante ? '#f59e0b' : '#6b7280'
@@ -61,11 +61,17 @@ export function construirDatasMarcadas(eventos, dataSelecionada) {
 
 export function buscarAlertas(eventos) {
   const alertas = []
+  const hoje = dataDeHoje()
 
   Object.entries(eventos).forEach(([data, evs]) => {
     ;(evs || []).forEach(ev => {
       const eUrgente = ev.prioridade === 'urgente' || ev.prioridade === 'importante'
-      if (eUrgente && estaEmMenos24h(data, ev.hora)) {
+      if (!eUrgente) return
+
+      const ehHoje = data === hoje
+      const dentro24h = estaEmMenos24h(data, ev.hora)
+
+      if (ehHoje || dentro24h) {
         alertas.push({ ...ev, data })
       }
     })

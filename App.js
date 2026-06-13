@@ -6,6 +6,8 @@ import { Text } from 'react-native'
 import Login from './screens/Login'
 import Home from './screens/Home'
 import Compromissos from './screens/Compromissos'
+import Notas from './screens/Notas'
+import Habitos from './screens/Habitos'
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -30,6 +32,16 @@ function AppTabs() {
         name="Compromissos"
         component={Compromissos}
         options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text> }}
+      />
+      <Tab.Screen
+        name="Notas"
+        component={Notas}
+        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📝</Text> }}
+      />
+      <Tab.Screen
+        name="Habitos"
+        component={Habitos}
+        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>✅</Text> }}
       />
     </Tab.Navigator>
   )
