@@ -8,6 +8,8 @@ const PRIORIDADES = [
   { rotulo: 'Urgente',    valor: 'urgente',    cor: '#ef4444', fundo: '#2a1010' },
 ]
 
+// Modal para criar ou editar um evento
+// event = null quando está criando, ou o objeto do evento quando está editando
 export default function EventModal({ visible, date, event, onSave, onDelete, onClose }) {
   const editando = !!event
 
@@ -16,6 +18,8 @@ export default function EventModal({ visible, date, event, onSave, onDelete, onC
   const [hora, setHora] = useState('')
   const [prioridade, setPrioridade] = useState('normal')
 
+  // Sempre que o modal abrir ou o evento mudar,
+  // preenche os campos com os dados do evento — ou limpa tudo se for novo
   useEffect(() => {
     if (event) {
       setTitulo(event.titulo || '')
@@ -30,6 +34,8 @@ export default function EventModal({ visible, date, event, onSave, onDelete, onC
     }
   }, [event, visible])
 
+  // Formata automaticamente o que o usuário digita no campo de hora
+  // pra ficar no formato HH:MM, ex: digitar "1430" vira "14:30"
   function formatarHora(v) {
     const d = v.replace(/\D/g, '').slice(0, 4)
     return d.length <= 2 ? d : d.slice(0, 2) + ':' + d.slice(2)

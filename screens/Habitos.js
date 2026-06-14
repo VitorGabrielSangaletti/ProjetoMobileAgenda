@@ -7,12 +7,13 @@ import { dataDeHoje } from '../utils/constantes'
 import styles from '../styles/habitosStyles'
 
 export default function Habitos() {
-  const [habitos, setHabitos] = useState([])
-  const [feitosHoje, setFeitosHoje] = useState([])
+  const [habitos, setHabitos] = useState([])      // lista de hábitos cadastrados (ex: "Beber água")
+  const [feitosHoje, setFeitosHoje] = useState([]) // ids dos hábitos já marcados hoje
   const [novoHabito, setNovoHabito] = useState('')
 
   const hoje = dataDeHoje()
 
+  // Carrega a lista de hábitos e também só os que já foram marcados hoje
   useFocusEffect(useCallback(() => {
     loadHabitos().then(setHabitos)
     loadHabitosFeitos().then(feitos => setFeitosHoje(feitos[hoje] || []))
@@ -25,6 +26,7 @@ export default function Habitos() {
     setNovoHabito('')
   }
 
+  // Marca/desmarca o hábito como feito hoje (toggle)
   async function marcarFeito(id) {
     const feitos = await toggleHabitoFeito(hoje, id)
     setFeitosHoje(feitos[hoje] || [])
@@ -40,6 +42,8 @@ export default function Habitos() {
     ])
   }
 
+  // Conta quantos hábitos da lista já foram marcados hoje, pra mostrar
+  // o progresso "3 de 5 feitos hoje" no cabeçalho
   const totalFeitos = habitos.filter(h => feitosHoje.includes(h.id)).length
 
   return (
@@ -64,6 +68,8 @@ export default function Habitos() {
         renderItem={({ item }) => {
           const feito = feitosHoje.includes(item.id)
           return (
+            // Toque normal: marca/desmarca como feito
+            // Toque longo (segurar): remove o hábito da lista
             <TouchableOpacity
               style={styles.item}
               onPress={() => marcarFeito(item.id)}

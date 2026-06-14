@@ -6,15 +6,19 @@ import { loadEvents } from '../utils/storage'
 import { PRIORIDADE } from '../utils/constantes'
 import styles from '../styles/compromissosStyles'
 
+// Transforma o objeto de eventos { "2026-06-13": [...] } numa lista
+// achatada de compromissos futuros, ordenada do mais próximo pro mais distante
 function listarCompromissos(eventos) {
   const agora = Date.now()
   const lista = []
 
   Object.entries(eventos).forEach(([data, evs]) => {
     ;(evs || []).forEach(ev => {
+      // Converte data + hora pra um timestamp único, pra poder comparar e ordenar
       const [ano, mes, dia] = data.split('-').map(Number)
       const [hora, minuto] = (ev.hora || '00:00').split(':').map(Number)
       const timestamp = new Date(ano, mes - 1, dia, hora, minuto).getTime()
+      // Só inclui eventos que ainda vão acontecer
       if (timestamp > agora) lista.push({ ...ev, data, timestamp })
     })
   })
@@ -22,6 +26,8 @@ function listarCompromissos(eventos) {
   return lista.sort((a, b) => a.timestamp - b.timestamp)
 }
 
+// Calcula a diferença entre agora e o timestamp do evento,
+// formatando em dias/horas/minutos/segundos de forma legível
 function tempoRestante(timestamp) {
   const diff = timestamp - Date.now()
   if (diff <= 0) return 'Agora!'
@@ -31,6 +37,8 @@ function tempoRestante(timestamp) {
   const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
   const segundos = Math.floor((diff % (1000 * 60)) / 1000)
 
+  // Mostra só as unidades relevantes — não precisa mostrar segundos
+  // se o evento ainda está a dias de distância
   if (dias > 0)  return `${dias}d ${horas}h ${minutos}m`
   if (horas > 0) return `${horas}h ${minutos}m ${segundos}s`
   return `${minutos}m ${segundos}s`
@@ -58,8 +66,11 @@ function CardCompromisso({ item, countdown }) {
 
 export default function Compromissos() {
   const [compromissos, setCompromissos] = useState([])
-  const [tick, setTick] = useState(0)
+  const [tick, setTick] = useState(0)  // não é usado diretamente, só força o componente a re-renderizar
 
+  // Carrega os eventos sempre que a aba ganha foco
+  // O "ativo" evita atualizar o estado se a tela for desmontada
+  // antes da resposta do Firestore chegar 
   useFocusEffect(useCallback(() => {
     let ativo = true
     loadEvents().then(dados => {
@@ -68,6 +79,8 @@ export default function Compromissos() {
     return () => { ativo = false }
   }, []))
 
+  // A cada 1 segundo, incrementa "tick" — isso força o componente a
+  // renderizar de novo, recalculando o countdown de cada compromisso
   useEffect(() => {
     const intervalo = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(intervalo)

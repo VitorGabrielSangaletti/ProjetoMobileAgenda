@@ -1,94 +1,114 @@
-import { useState, useCallback } from 'react'
-import { View, Text, FlatList, TouchableOpacity, TextInput, Alert } from 'react-native'
+import { useState, useCallback, useRef } from 'react'
+import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
+import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor'
 import { loadNotas, addNota, updateNota, deleteNota } from '../utils/storage'
 import styles from '../styles/notasStyles'
 
-const TAMANHOS = [14, 16, 18, 22, 26]
-
+// Tela de edição/criação de uma nota
+// nota = null quando está criando uma nova, ou o objeto da nota quando está editando
 function NotaEditor({ nota, onSalvar, onExcluir, onFechar }) {
+  // O RichEditor não usa estado do React pro conteúdo — ele guarda o HTML
+  // internamente. Por isso usamos uma ref pra "pedir" o conteúdo só na hora de salvar
+  const editorRef = useRef(null)
   const [titulo, setTitulo] = useState(nota?.titulo || '')
-  const [texto, setTexto] = useState(nota?.texto || '')
-  const [tamanhoFonte, setTamanhoFonte] = useState(nota?.tamanhoFonte || 16)
-  const [negrito, setNegrito] = useState(nota?.negrito || false)
+  const conteudoInicial = nota?.conteudo || ''
 
-  function aumentarFonte() {
-    const indice = TAMANHOS.indexOf(tamanhoFonte)
-    if (indice < TAMANHOS.length - 1) setTamanhoFonte(TAMANHOS[indice + 1])
-  }
-
-  function diminuirFonte() {
-    const indice = TAMANHOS.indexOf(tamanhoFonte)
-    if (indice > 0) setTamanhoFonte(TAMANHOS[indice - 1])
-  }
-
-  function salvar() {
-    if (!titulo.trim() && !texto.trim()) return onFechar()
-    onSalvar({ titulo: titulo.trim() || 'Sem título', texto, tamanhoFonte, negrito })
+  async function salvar() {
+    // getContentHtml() pega o HTML atual de dentro do editor
+    const conteudo = await editorRef.current?.getContentHtml()
+    if (!titulo.trim() && !conteudo?.trim()) return onFechar()
+    onSalvar({ titulo: titulo.trim() || 'Sem título', conteudo: conteudo || '' })
   }
 
   return (
-    <View style={styles.fundo}>
+    <SafeAreaView style={styles.fundo}>
       <View style={styles.editorHeader}>
-        <TouchableOpacity style={styles.botaoHeader} onPress={onFechar}>
-          <Text style={styles.textoBotaoHeader}>Voltar</Text>
+        <TouchableOpacity onPress={onFechar}>
+          <Text style={styles.textoBotaoHeader}>← Voltar</Text>
         </TouchableOpacity>
 
-        {nota && (
-          <TouchableOpacity style={styles.botaoHeader} onPress={onExcluir}>
-            <Text style={styles.textoExcluirHeader}>Excluir</Text>
+        <View style={{ flexDirection: 'row', gap: 16 }}>
+          {nota && (
+            <TouchableOpacity onPress={onExcluir}>
+              <Text style={styles.textoExcluirHeader}>Excluir</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={salvar}>
+            <Text style={styles.textoBotaoHeader}>Salvar</Text>
           </TouchableOpacity>
-        )}
-
-        <TouchableOpacity style={styles.botaoHeader} onPress={salvar}>
-          <Text style={styles.textoBotaoHeader}>Salvar</Text>
-        </TouchableOpacity>
+        </View>
       </View>
 
-      <TextInput
-        style={styles.campoTitulo}
-        placeholder="Título da nota"
-        placeholderTextColor="#555"
-        value={titulo}
-        onChangeText={setTitulo}
-      />
-
-      <TextInput
-        style={[
-          styles.campoTexto,
-          { fontSize: tamanhoFonte, fontWeight: negrito ? 'bold' : 'normal' },
-        ]}
-        placeholder="Escreva aqui..."
-        placeholderTextColor="#555"
-        value={texto}
-        onChangeText={setTexto}
-        multiline
-      />
-
-      <View style={styles.barraFormatacao}>
-        <TouchableOpacity style={styles.botaoFormato} onPress={diminuirFonte}>
-          <Text style={styles.textoBotaoFormato}>A-</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.botaoFormato} onPress={aumentarFonte}>
-          <Text style={styles.textoBotaoFormato}>A+</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.botaoFormato, negrito && styles.botaoFormatoAtivo]}
-          onPress={() => setNegrito(v => !v)}
+      {/* Campo de título simples */}
+      <View style={styles.containerTitulo}>
+        <Text
+          style={styles.campoTitulo}
+          onPress={() => {}}
         >
-          <Text style={styles.textoBotaoFormato}>B</Text>
-        </TouchableOpacity>
+          {titulo || 'Título da nota'}
+        </Text>
       </View>
-    </View>
+
+      
+      <RichToolbar
+        editor={editorRef}
+        style={styles.barraFormatacao}
+        iconTint="#888"
+        selectedIconTint="#4f46e5"
+        actions={[
+          actions.setBold,
+          actions.setItalic,
+          actions.setUnderline,
+          actions.heading1,
+          actions.heading2,
+          actions.insertBulletsList,
+          actions.insertOrderedList,
+          actions.undo,
+          actions.redo,
+        ]}
+        // Substitui os ícones padrão de H1/H2 por texto, já que a lib
+        // não vem com ícone pronto pra esses botões
+        iconMap={{
+          [actions.heading1]: () => <Text style={styles.iconeToolbar}>H1</Text>,
+          [actions.heading2]: () => <Text style={styles.iconeToolbar}>H2</Text>,
+        }}
+      />
+
+      
+      <ScrollView style={{ flex: 1 }}>
+        <RichEditor
+          ref={editorRef}
+          style={styles.editor}
+          placeholder="Escreva aqui..."
+          initialContentHTML={conteudoInicial}
+          editorStyle={{
+            backgroundColor: '#0d0f12',
+            color: '#c9d1d9',
+            placeholderColor: '#555',
+            caretColor: '#4f46e5',
+            contentCSSText: 'font-size: 16px; font-family: sans-serif; padding: 16px;',
+          }}
+          onChange={text => {
+            // Se o usuário ainda não definiu um título, usa o começo
+            // do texto digitado como título automático 
+            if (!titulo && text.length > 0) {
+              const semHtml = text.replace(/<[^>]+>/g, '').trim().slice(0, 40)
+              setTitulo(semHtml)
+            }
+          }}
+        />
+      </ScrollView>
+    </SafeAreaView>
   )
 }
 
+// Tela principal — mostra a lista de notas, ou abre o NotaEditor
+// quando uma nota é selecionada ou uma nova está sendo criada
 export default function Notas() {
   const [notas, setNotas] = useState([])
-  const [notaAberta, setNotaAberta] = useState(null)
+  const [notaAberta, setNotaAberta] = useState(null)  // nota sendo editada 
   const [criandoNova, setCriandoNova] = useState(false)
 
   useFocusEffect(useCallback(() => {
@@ -100,7 +120,11 @@ export default function Notas() {
     if (notaAberta) {
       novas = await updateNota(notaAberta.id, dados)
     } else {
-      novas = await addNota({ id: Date.now().toString(), ...dados, criadoEm: new Date().toISOString() })
+      novas = await addNota({
+        id: Date.now().toString(),
+        ...dados,
+        criadoEm: new Date().toISOString(),
+      })
     }
     setNotas(novas)
     setNotaAberta(null)
@@ -118,6 +142,14 @@ export default function Notas() {
     ])
   }
 
+  // Tira as tags HTML pra mostrar prévia no card
+  function previa(html) {
+    return html?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || ''
+  }
+
+  // Enquanto o editor estiver "aberto" (editando ou criando), mostra
+  // o NotaEditor no lugar da lista — é um negocio simples pra simular navegação
+  // sem precisar registrar outra rota no Bottom Tab
   if (notaAberta || criandoNova) {
     return (
       <NotaEditor
@@ -149,7 +181,7 @@ export default function Notas() {
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card} onPress={() => setNotaAberta(item)}>
             <Text style={styles.cardTitulo}>{item.titulo}</Text>
-            <Text style={styles.cardTexto} numberOfLines={3}>{item.texto}</Text>
+            <Text style={styles.cardTexto} numberOfLines={3}>{previa(item.conteudo)}</Text>
             <Text style={styles.cardData}>
               {new Date(item.criadoEm).toLocaleDateString('pt-BR')}
             </Text>

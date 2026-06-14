@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native'
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0d0f12' },
+  fundo: { flex: 1, backgroundColor: '#0d0f12' },
 
   header: {
     paddingHorizontal: 18,
@@ -43,7 +44,6 @@ const styles = StyleSheet.create({
   fabTexto: { color: '#fff', fontSize: 32, fontWeight: 'bold', lineHeight: 36 },
 
   // Editor
-  fundo: { flex: 1, backgroundColor: '#0d0f12' },
   editorHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -54,50 +54,37 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1e2127',
   },
-  botaoHeader: { padding: 6 },
   textoBotaoHeader: { color: '#4f46e5', fontSize: 15, fontWeight: '600' },
   textoExcluirHeader: { color: '#ef4444', fontSize: 15, fontWeight: '600' },
 
+  containerTitulo: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e2127',
+  },
   campoTitulo: {
     color: '#e8e8e8',
     fontSize: 20,
     fontWeight: 'bold',
-    padding: 16,
-    paddingBottom: 8,
-  },
-  campoTexto: {
-    flex: 1,
-    color: '#c9d1d9',
-    fontSize: 16,
-    padding: 16,
-    paddingTop: 8,
-    textAlignVertical: 'top',
   },
 
   barraFormatacao: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
     backgroundColor: '#141618',
-    borderTopWidth: 1,
-    borderTopColor: '#1e2127',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e2127',
   },
-  botaoFormato: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#1e2127',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2a2d35',
+
+  editor: {
+    flex: 1,
+    minHeight: 400,
   },
-  botaoFormatoAtivo: {
-    backgroundColor: '#2a2050',
-    borderColor: '#4f46e5',
+
+  iconeToolbar: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
-  textoBotaoFormato: { color: '#c9d1d9', fontSize: 16, fontWeight: 'bold' },
 })
 
 export default styles
