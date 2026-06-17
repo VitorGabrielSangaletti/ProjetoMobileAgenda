@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, TouchableOpacity, Alert, FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Agenda } from 'react-native-calendars'
+import { Calendar } from 'react-native-calendars'
 import { useFocusEffect, useIsFocused } from '@react-navigation/native'
 import { signOut } from 'firebase/auth'
 import { auth } from '../utils/firebase'
 
 import { loadEvents, addEvent, updateEvent, deleteEvent } from '../utils/storage'
-import { buscarAlertas, pesquisarEventos, construirDatasMarcadas, temaAgenda } from '../utils/constantes'
+import { buscarAlertas, pesquisarEventos, construirDatasMarcadas, temaAgenda, PRIORIDADE } from '../utils/constantes'
 import styles from '../styles/homeStyles'
 
 import BarraSuperior from '../components/BarraSuperior'
@@ -17,20 +17,16 @@ import EventModal from './EventModal'
 import { ItemEvento, ResultadoPesquisa } from '../components/ItemEvento'
 
 export default function Home({ navigation }) {
-  const [eventos, setEventos] = useState({})                 
+  const [eventos, setEventos] = useState({})
   const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0])
-  const [modalVisivel, setModalVisivel] = useState(false)     
-  const [eventoEditando, setEventoEditando] = useState(null)  
-  const [alertaVisivel, setAlertaVisivel] = useState(false)   
+  const [modalVisivel, setModalVisivel] = useState(false)
+  const [eventoEditando, setEventoEditando] = useState(null)
+  const [alertaVisivel, setAlertaVisivel] = useState(false)
   const [termoPesquisa, setTermoPesquisa] = useState('')
   const [modoPesquisa, setModoPesquisa] = useState(false)
 
-  // true só quando esta aba está em foco — usado para não mostrar o popup
-  // de alerta quando o usuário está em outra aba (Notas, Hábitos, etc)
   const telaPrincialAtiva = useIsFocused()
 
-  // Roda toda vez que a tela ganha foco (ex: voltar pra essa aba)
-  // Recarrega os eventos do Firestore e verifica se precisa mostrar alerta
   useFocusEffect(useCallback(() => {
     loadEvents().then(dados => {
       setEventos(dados)
@@ -38,13 +34,10 @@ export default function Home({ navigation }) {
     })
   }, []))
 
-  // Se os eventos mudarem (ex: editou a prioridade) e não houver mais
-  // nenhum alerta pendente, fecha o popup automaticamente
   useEffect(() => {
     if (buscarAlertas(eventos).length === 0) setAlertaVisivel(false)
   }, [eventos])
 
-  // Se já existe eventoEditando, atualiza; senão cria um novo
   async function salvarEvento(dados) {
     const novo = eventoEditando
       ? await updateEvent(dataSelecionada, dados.id, dados)
@@ -54,7 +47,6 @@ export default function Home({ navigation }) {
     setEventoEditando(null)
   }
 
-  // Pede confirmação antes de excluir, igual outros apps fazem
   function excluirEvento(id) {
     Alert.alert('Excluir evento', 'Tem certeza?', [
       { text: 'Cancelar', style: 'cancel' },
@@ -67,8 +59,6 @@ export default function Home({ navigation }) {
     ])
   }
 
-  // Abre o modal para editar um evento existente
-  // O parâmetro "data" é usado quando o evento vem da busca (data diferente da selecionada)
   function abrirEdicao(evento, data) {
     setDataSelecionada(data || dataSelecionada)
     setEventoEditando(evento)
@@ -77,11 +67,8 @@ export default function Home({ navigation }) {
 
   const alertas = buscarAlertas(eventos)
 
-  // O componente Agenda espera um objeto { "2026-06-13": [...eventos] }
-  // com a propriedade "height" em cada item para calcular o layout
-  const itensAgenda = Object.fromEntries(
-    Object.entries(eventos).map(([data, evs]) => [data, evs.map(e => ({ ...e, height: 60 }))])
-  )
+  // Pega só os eventos da data selecionada — nada mais, nada menos
+  const eventosDoDia = eventos[dataSelecionada] || []
 
   return (
     <SafeAreaView style={styles.container}>
@@ -89,14 +76,13 @@ export default function Home({ navigation }) {
         modoPesquisa={modoPesquisa}
         aoTogglePesquisa={() => { setModoPesquisa(v => !v); setTermoPesquisa('') }}
         aoSair={async () => {
-          await signOut(auth)  // desloga do Firebase
-          navigation.getParent().replace('Login')  // getParent() porque essa tela está dentro do Bottom Tab
+          await signOut(auth)
+          navigation.getParent().replace('Login')
         }}
       />
 
       <BannerAlerta quantidade={alertas.length} aoPress={() => setAlertaVisivel(true)} />
 
-      {/* Alterna entre o calendário e a lista de resultados da busca */}
       {modoPesquisa ? (
         <ResultadoPesquisa
           termoPesquisa={termoPesquisa}
@@ -105,22 +91,34 @@ export default function Home({ navigation }) {
           aoSelecionarItem={item => abrirEdicao(item, item.data)}
         />
       ) : (
-        <Agenda
-          items={itensAgenda}
-          selected={dataSelecionada}
-          markedDates={construirDatasMarcadas(eventos, dataSelecionada)}
-          onDayPress={dia => setDataSelecionada(dia.dateString)}
-          theme={temaAgenda}
-          renderItem={item => <ItemEvento item={item} aoPress={() => abrirEdicao(item)} />}
-          renderEmptyDate={() => (
-            <View style={styles.semEvento}>
-              <Text style={styles.textoSemEvento}>Sem eventos</Text>
-            </View>
-          )}
-        />
+        <>
+          {/* Calendario compacto só o cabeçalho com os dias da semana */}
+          <Calendar
+            current={dataSelecionada}
+            onDayPress={dia => setDataSelecionada(dia.dateString)}
+            markedDates={construirDatasMarcadas(eventos, dataSelecionada)}
+            theme={temaAgenda}
+          />
+
+          {/* Lista de eventos da data selecionada */}
+          <FlatList
+            data={eventosDoDia}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listaEventos}
+            ListEmptyComponent={
+              <View style={styles.semEventos}>
+                <Text style={styles.textoSemEventos}>📅</Text>
+                <Text style={styles.textoSemEventos}>Sem eventos neste dia</Text>
+                <Text style={styles.textoSemEventosDica}>Toque no + para adicionar</Text>
+              </View>
+            }
+            renderItem={({ item }) => (
+              <ItemEvento item={item} aoPress={() => abrirEdicao(item)} />
+            )}
+          />
+        </>
       )}
 
-      {/* Botão flutuante para criar um novo evento na data selecionada */}
       <TouchableOpacity style={styles.fab} onPress={() => { setEventoEditando(null); setModalVisivel(true) }}>
         <Text style={styles.fabTexto}>+</Text>
       </TouchableOpacity>
@@ -134,7 +132,6 @@ export default function Home({ navigation }) {
         onClose={() => { setModalVisivel(false); setEventoEditando(null) }}
       />
 
-      {/* Só mostra o popup se houver alerta E a aba Agenda estiver ativa */}
       <ModalAlertas visivel={alertaVisivel && telaPrincialAtiva} alertas={alertas} aoFechar={() => setAlertaVisivel(false)} />
     </SafeAreaView>
   )

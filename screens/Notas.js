@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView } from 'react-native'
+import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView, TextInput } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
 import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor'
@@ -41,14 +41,15 @@ function NotaEditor({ nota, onSalvar, onExcluir, onFechar }) {
         </View>
       </View>
 
-      {/* Campo de título simples */}
+      {/* TextInput pra permitir editar o título normalmente */}
       <View style={styles.containerTitulo}>
-        <Text
+        <TextInput
           style={styles.campoTitulo}
-          onPress={() => {}}
-        >
-          {titulo || 'Título da nota'}
-        </Text>
+          placeholder="Título da nota"
+          placeholderTextColor="#555"
+          value={titulo}
+          onChangeText={setTitulo}
+        />
       </View>
 
       
@@ -76,13 +77,13 @@ function NotaEditor({ nota, onSalvar, onExcluir, onFechar }) {
         }}
       />
 
-      
       <ScrollView style={{ flex: 1 }}>
         <RichEditor
           ref={editorRef}
           style={styles.editor}
           placeholder="Escreva aqui..."
           initialContentHTML={conteudoInicial}
+          androidLayerType="hardware" //permite usar acentos no android
           editorStyle={{
             backgroundColor: '#0d0f12',
             color: '#c9d1d9',
@@ -92,7 +93,7 @@ function NotaEditor({ nota, onSalvar, onExcluir, onFechar }) {
           }}
           onChange={text => {
             // Se o usuário ainda não definiu um título, usa o começo
-            // do texto digitado como título automático 
+            // do texto digitado como título automático (até 40 caracteres)
             if (!titulo && text.length > 0) {
               const semHtml = text.replace(/<[^>]+>/g, '').trim().slice(0, 40)
               setTitulo(semHtml)
@@ -108,7 +109,7 @@ function NotaEditor({ nota, onSalvar, onExcluir, onFechar }) {
 // quando uma nota é selecionada ou uma nova está sendo criada
 export default function Notas() {
   const [notas, setNotas] = useState([])
-  const [notaAberta, setNotaAberta] = useState(null)  // nota sendo editada 
+  const [notaAberta, setNotaAberta] = useState(null)  // nota sendo editada (ou null)
   const [criandoNova, setCriandoNova] = useState(false)
 
   useFocusEffect(useCallback(() => {
@@ -147,9 +148,8 @@ export default function Notas() {
     return html?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || ''
   }
 
-  // Enquanto o editor estiver "aberto" (editando ou criando), mostra
-  // o NotaEditor no lugar da lista — é um negocio simples pra simular navegação
-  // sem precisar registrar outra rota no Bottom Tab
+  // Enquanto o editor estiver aberto (editando ou criando), mostra
+  // o NotaEditor no lugar da lista 
   if (notaAberta || criandoNova) {
     return (
       <NotaEditor

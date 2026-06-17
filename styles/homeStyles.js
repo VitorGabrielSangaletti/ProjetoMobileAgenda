@@ -14,6 +14,24 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 13,
   },
+  listaEventos: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  semEventos: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 60,
+  },
+  textoSemEventos: {
+    color: '#555',
+    fontSize: 16,
+  },
+  textoSemEventosDica: {
+    color: '#3a3f4b',
+    fontSize: 13,
+  },
   fab: {
     position: 'absolute',
     bottom: 30,

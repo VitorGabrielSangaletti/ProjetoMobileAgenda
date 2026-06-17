@@ -1,7 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { Text } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 
 import Login from './screens/Login'
 import Home from './screens/Home'
@@ -26,22 +26,22 @@ function AppTabs() {
       <Tab.Screen
         name="Agenda"
         component={Home}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📓</Text> }}
+        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} /> }}
       />
       <Tab.Screen
         name="Compromissos"
         component={Compromissos}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text> }}
+        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="checkmark-circle-outline" size={size} color={color} /> }}
       />
       <Tab.Screen
         name="Notas"
         component={Notas}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📝</Text> }}
+        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="document-text-outline" size={size} color={color} /> }}
       />
       <Tab.Screen
         name="Habitos"
         component={Habitos}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>✅</Text> }}
+        options={{ tabBarIcon: ({ color, size }) => <Ionicons name="checkbox-outline" size={size} color={color} /> }}
       />
     </Tab.Navigator>
   )

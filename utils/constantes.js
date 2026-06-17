@@ -1,5 +1,5 @@
-// Este arquivo reune valores e funções que vai ser usado em várias telas do app, pra não precisar repetir a mesma lógica/cores em cada arquivo
-
+// esse arquivo pega tudo os valor e funcao usado nas telas do app
+// pra não precisar repetir a mesma lógica e as cor em cada arquivo
 
 // Define as cores e rótulos de cada nível de prioridade
 // Usado em toda a app para manter consistência visual
@@ -9,8 +9,8 @@ export const PRIORIDADE = {
   normal:     { cor: '#6b7280', rotulo: '⚪ Normal' },
 }
 
-// Cores/estilizacao do app
-
+// Tema escuro para o componente Agenda do react-native-calendars
+// Cada propriedade controla a cor de um elemento visual do calendário
 export const temaAgenda = {
   backgroundColor: '#0d0f12',
   calendarBackground: '#141618',
@@ -65,7 +65,6 @@ export function construirDatasMarcadas(eventos, dataSelecionada) {
     const evs = eventos[data] || []
     const temUrgente = evs.some(e => e.prioridade === 'urgente')
     const temImportante = evs.some(e => e.prioridade === 'importante')
-    
     const corPonto = temUrgente ? '#ef4444' : temImportante ? '#f59e0b' : '#6b7280'
 
     marcacoes[data] = {
@@ -98,8 +97,9 @@ export function buscarAlertas(eventos) {
 
   Object.entries(eventos).forEach(([data, evs]) => {
     ;(evs || []).forEach(ev => {
-      const eUrgente = ev.prioridade === 'urgente' || ev.prioridade === 'importante'
-      if (!eUrgente) return
+      // Apenas eventos urgentes aparecem no popup de alerta
+      // Importante não entra mais nessa regra
+      if (ev.prioridade !== 'urgente') return
 
       const ehHoje = data === hoje
       const dentro24h = estaEmMenos24h(data, ev.hora)
