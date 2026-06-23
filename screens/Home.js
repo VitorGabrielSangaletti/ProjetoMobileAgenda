@@ -1,3 +1,6 @@
+//Imports
+
+
 import { useState, useEffect, useCallback } from 'react'
 import { View, Text, TouchableOpacity, Alert, FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -16,9 +19,13 @@ import ModalAlertas from '../components/ModalAlertas'
 import EventModal from './EventModal'
 import { ItemEvento, ResultadoPesquisa } from '../components/ItemEvento'
 
+
+
 export default function Home({ navigation }) {
+
+  //Variaveis
   const [eventos, setEventos] = useState({})
-  const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0])
+  const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]) //Formato de data
   const [modalVisivel, setModalVisivel] = useState(false)
   const [eventoEditando, setEventoEditando] = useState(null)
   const [alertaVisivel, setAlertaVisivel] = useState(false)
@@ -27,6 +34,7 @@ export default function Home({ navigation }) {
 
   const telaPrincialAtiva = useIsFocused()
 
+  //pop pup de alerta se tiver eventos 
   useFocusEffect(useCallback(() => {
     loadEvents().then(dados => {
       setEventos(dados)
@@ -38,10 +46,11 @@ export default function Home({ navigation }) {
     if (buscarAlertas(eventos).length === 0) setAlertaVisivel(false)
   }, [eventos])
 
+
   async function salvarEvento(dados) {
     const novo = eventoEditando
-      ? await updateEvent(dataSelecionada, dados.id, dados)
-      : await addEvent(dataSelecionada, dados)
+      ? await updateEvent(dataSelecionada, dados.id, dados) //se tiver dados ele atualiza o evento
+      : await addEvent(dataSelecionada, dados) //se nao ele cria um
     setEventos(novo)
     setModalVisivel(false)
     setEventoEditando(null)
@@ -51,7 +60,7 @@ export default function Home({ navigation }) {
     Alert.alert('Excluir evento', 'Tem certeza?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Excluir', style: 'destructive', onPress: async () => {
-        const novo = await deleteEvent(dataSelecionada, id)
+        const novo = await deleteEvent(dataSelecionada, id) 
         setEventos(novo)
         setModalVisivel(false)
         setEventoEditando(null)
@@ -67,16 +76,16 @@ export default function Home({ navigation }) {
 
   const alertas = buscarAlertas(eventos)
 
-  // Pega só os eventos da data selecionada — nada mais, nada menos
+  // Pega os eventos da data selecionada e se nao tiver ele retorna um array vazio
   const eventosDoDia = eventos[dataSelecionada] || []
 
   return (
     <SafeAreaView style={styles.container}>
       <BarraSuperior
         modoPesquisa={modoPesquisa}
-        aoTogglePesquisa={() => { setModoPesquisa(v => !v); setTermoPesquisa('') }}
-        aoSair={async () => {
-          await signOut(auth)
+        aoTogglePesquisa={() => { setModoPesquisa(v => !v); setTermoPesquisa('') }} //limpa a pesquisa quando fecha o mode de pequisa
+        aoSair={async () => { 
+          await signOut(auth) 
           navigation.getParent().replace('Login')
         }}
       />
@@ -92,7 +101,7 @@ export default function Home({ navigation }) {
         />
       ) : (
         <>
-          {/* Calendario compacto só o cabeçalho com os dias da semana */}
+          {/* Calendario */}
           <Calendar
             current={dataSelecionada}
             onDayPress={dia => setDataSelecionada(dia.dateString)}
@@ -112,7 +121,7 @@ export default function Home({ navigation }) {
                 <Text style={styles.textoSemEventosDica}>Toque no + para adicionar</Text>
               </View>
             }
-            renderItem={({ item }) => (
+            renderItem={({ item }) => ( // 
               <ItemEvento item={item} aoPress={() => abrirEdicao(item)} />
             )}
           />

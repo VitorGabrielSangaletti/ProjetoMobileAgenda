@@ -1,9 +1,12 @@
+//imports
+
 import { useState } from 'react'
 import { TextInput, View, Image, Text, TouchableOpacity, ImageBackground, Alert, ActivityIndicator } from 'react-native'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../utils/firebase'
 import styles from '../styles/loginStyles'
 
+//variaveis
 export default function Login({ navigation }) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -11,6 +14,7 @@ export default function Login({ navigation }) {
   const [modoCadastro, setModoCadastro] = useState(false)
 
   async function entrar() {
+    
     
     if (!email.trim() || !senha.trim()) {
       Alert.alert('Atenção', 'Preencha email e senha.')

@@ -1,3 +1,5 @@
+//imports
+
 import { useState, useCallback, useRef } from 'react'
 import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView, TextInput } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -7,18 +9,17 @@ import { loadNotas, addNota, updateNota, deleteNota } from '../utils/storage'
 import styles from '../styles/notasStyles'
 
 // Tela de edição/criação de uma nota
-// nota = null quando está criando uma nova, ou o objeto da nota quando está editando
+
 function NotaEditor({ nota, onSalvar, onExcluir, onFechar }) {
-  // O RichEditor não usa estado do React pro conteúdo — ele guarda o HTML
-  // internamente. Por isso usamos uma ref pra "pedir" o conteúdo só na hora de salvar
+  // O RichEditor nao usa estado do React pro conteudo ele guarda no HTML internamente. Ai tem que usar uma ref pra "pedir" o conteudo so na hora de salvar
   const editorRef = useRef(null)
   const [titulo, setTitulo] = useState(nota?.titulo || '')
-  const conteudoInicial = nota?.conteudo || ''
+  const conteudoInicial = nota?.conteudo || ''  //mostra o contedo se tiver, se nao mostra vazio
 
   async function salvar() {
     // getContentHtml() pega o HTML atual de dentro do editor
-    const conteudo = await editorRef.current?.getContentHtml()
-    if (!titulo.trim() && !conteudo?.trim()) return onFechar()
+    const conteudo = await editorRef.current?.getContentHtml() 
+    if (!titulo.trim() && !conteudo?.trim()) return onFechar() // Se nao tiver nada ele volta sem salvar
     onSalvar({ titulo: titulo.trim() || 'Sem título', conteudo: conteudo || '' })
   }
 
@@ -41,7 +42,7 @@ function NotaEditor({ nota, onSalvar, onExcluir, onFechar }) {
         </View>
       </View>
 
-      {/* TextInput pra permitir editar o título normalmente */}
+      
       <View style={styles.containerTitulo}>
         <TextInput
           style={styles.campoTitulo}
@@ -69,8 +70,7 @@ function NotaEditor({ nota, onSalvar, onExcluir, onFechar }) {
           actions.undo,
           actions.redo,
         ]}
-        // Substitui os ícones padrão de H1/H2 por texto, já que a lib
-        // não vem com ícone pronto pra esses botões
+        // Os icone do H1 e do h2 nao vem por padrao ai tem que criar um componente pra mostrar eles
         iconMap={{
           [actions.heading1]: () => <Text style={styles.iconeToolbar}>H1</Text>,
           [actions.heading2]: () => <Text style={styles.iconeToolbar}>H2</Text>,
@@ -92,8 +92,7 @@ function NotaEditor({ nota, onSalvar, onExcluir, onFechar }) {
             contentCSSText: 'font-size: 16px; font-family: sans-serif; padding: 16px;',
           }}
           onChange={text => {
-            // Se o usuário ainda não definiu um título, usa o começo
-            // do texto digitado como título automático (até 40 caracteres)
+            // Se  nao bota titulo ele pega os primeiros 40 digito pra mostrar no card da lista de notas
             if (!titulo && text.length > 0) {
               const semHtml = text.replace(/<[^>]+>/g, '').trim().slice(0, 40)
               setTitulo(semHtml)
@@ -105,26 +104,26 @@ function NotaEditor({ nota, onSalvar, onExcluir, onFechar }) {
   )
 }
 
-// Tela principal — mostra a lista de notas, ou abre o NotaEditor
-// quando uma nota é selecionada ou uma nova está sendo criada
+
 export default function Notas() {
+  //variaveis
   const [notas, setNotas] = useState([])
   const [notaAberta, setNotaAberta] = useState(null)  // nota sendo editada (ou null)
   const [criandoNova, setCriandoNova] = useState(false)
 
   useFocusEffect(useCallback(() => {
-    loadNotas().then(setNotas)
+    loadNotas().then(setNotas) //quando a tela ta visivel ele carrega as nota 
   }, []))
 
   async function salvarNota(dados) {
     let novas
     if (notaAberta) {
-      novas = await updateNota(notaAberta.id, dados)
+      novas = await updateNota(notaAberta.id, dados) //se tiver nota aberta ele atualiza ela
     } else {
       novas = await addNota({
-        id: Date.now().toString(),
+        id: Date.now().toString(), 
         ...dados,
-        criadoEm: new Date().toISOString(),
+        criadoEm: new Date().toISOString(),// mostra a data de criracao da nota
       })
     }
     setNotas(novas)
@@ -148,8 +147,7 @@ export default function Notas() {
     return html?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || ''
   }
 
-  // Enquanto o editor estiver aberto (editando ou criando), mostra
-  // o NotaEditor no lugar da lista 
+
   if (notaAberta || criandoNova) {
     return (
       <NotaEditor
