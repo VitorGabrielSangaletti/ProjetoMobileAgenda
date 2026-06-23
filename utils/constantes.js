@@ -1,16 +1,14 @@
-// esse arquivo pega tudo os valor e funcao usado nas telas do app
-// pra não precisar repetir a mesma lógica e as cor em cada arquivo
+// esse arquivo pega tudo os valor e funcao usado nas telas do app pra não precisar repetir a mesma logica e as cor em cada arquivo
 
 // Define as cores e rótulos de cada nível de prioridade
-// Usado em toda a app para manter consistência visual
+
 export const PRIORIDADE = {
   urgente:    { cor: '#ef4444', rotulo: '🔴 Urgente' },
   importante: { cor: '#f59e0b', rotulo: '🟡 Importante' },
   normal:     { cor: '#6b7280', rotulo: '⚪ Normal' },
 }
 
-// Tema escuro para o componente Agenda do react-native-calendars
-// Cada propriedade controla a cor de um elemento visual do calendário
+//tema do app
 export const temaAgenda = {
   backgroundColor: '#0d0f12',
   calendarBackground: '#141618',
@@ -29,35 +27,25 @@ export const temaAgenda = {
   agendaKnobColor: '#2a2d35',
 }
 
-// Retorna a data de hoje no formato YYYY-MM-DD (ex: "2026-06-13")
-// Usado para comparar datas e marcar o dia atual
+// Retorna a data de hoje no formato YYYY-MM-DD 
 export function dataDeHoje() {
   return new Date().toISOString().split('T')[0]
 }
 
 // Verifica se um evento acontece nas próximas 24 horas
 
-// data vem como "2026-06-13" e hora como "14:30" — fazemos o split('-')
-// e split(':') pra separar em números, e então montamos um new Date()
-// passando ano/mês/dia/hora/minuto separados. Isso é importante porque
-// new Date("2026-06-13") sozinho cria a data em UTC, o que pode jogar
-// pra um dia diferente dependendo do fuso horário do usuário
 export function estaEmMenos24h(data, hora) {
   if (!data || !hora) return false
-  const [ano, mes, dia] = data.split('-').map(Number)
-  const [h, m] = hora.split(':').map(Number)
-  // mes - 1 porque no JavaScript os meses começam em 0 (janeiro = 0)
-  const evento = new Date(ano, mes - 1, dia, h || 0, m || 0)
+  const [ano, mes, dia] = data.split('-').map(Number) //separa a data com -
+  const [h, m] = hora.split(':').map(Number) //separa hora com :
+  const evento = new Date(ano, mes - 1, dia, h || 0, m || 0)  // mes - 1 porque no JavaScript os meses começam em 0 (janeiro = 0)
   const diff = evento - Date.now()
   // diff > 0 = evento ainda não aconteceu
-  // diff < 24h em milissegundos = está chegando
-  return diff > 0 && diff < 24 * 60 * 60 * 1000
+  // diff < 24h em milissegundos = ta chegando
+  return diff > 0 && diff < 24 * 60 * 60 * 1000 
 }
 
-// Monta o objeto de marcações do calendário
-// O componente Agenda espera um objeto no formato:
-//   { "2026-06-13": { marked: true, dotColor: '#...', selected: true, ... } }
-// Cada data com evento recebe um ponto colorido de acordo com a prioridade mais alta
+//Marca os dia com eventos
 export function construirDatasMarcadas(eventos, dataSelecionada) {
   const marcacoes = {}
 
@@ -83,23 +71,15 @@ export function construirDatasMarcadas(eventos, dataSelecionada) {
   return marcacoes
 }
 
-// Retorna todos os eventos urgentes/importantes que merecem alerta:
-// - Eventos de hoje (independente da hora)
-// - Eventos de outros dias que acontecem em menos de 24h
-//
-// Object.entries transforma { "2026-06-13": [...] } em pares [data, lista],
-// o que facilita percorrer tanto a data quanto os eventos daquele dia.
-// O ";(evs || [])" no início da linha é só pra evitar um erro de sintaxe
-// (o JS pode confundir a linha anterior com uma chamada de função)
+
 export function buscarAlertas(eventos) {
   const alertas = []
   const hoje = dataDeHoje()
 
   Object.entries(eventos).forEach(([data, evs]) => {
     ;(evs || []).forEach(ev => {
-      // Apenas eventos urgentes aparecem no popup de alerta
-      // Importante não entra mais nessa regra
-      if (ev.prioridade !== 'urgente') return
+      
+      if (ev.prioridade !== 'urgente') return // Apenas eventos urgentes aparecem no popup de alerta
 
       const ehHoje = data === hoje
       const dentro24h = estaEmMenos24h(data, ev.hora)
@@ -113,8 +93,7 @@ export function buscarAlertas(eventos) {
   return alertas
 }
 
-// Filtra eventos que batem com o termo de busca
-// Procura na data, no título e na descrição do evento
+//funcao pra pesquisar os eventos
 export function pesquisarEventos(eventos, termo) {
   if (!termo.trim()) return []
 
